@@ -1,13 +1,11 @@
-export const getRepairsRequest = async () => {
+export async function getRepairsRequest() {
   try {
-    const response = await fetch("http://localhost:5000/requests"); //
-    if (!response.ok) {
-      throw new Error("Failed to fetch repair requests");
-    }
+    const response = await fetch("http://localhost:5000/requests");
     const data = await response.json();
-    return data.rows; // ✅ Always extract .rows
-  } catch (err) {
-    console.error("Error fetching repairs:", err);
-    return []; // Return empty array on error
+    console.log("Fetched Data from API:", data); // Ensure this logs correctly
+    return data;
+  } catch (error) {
+    console.error("Error fetching repair requests:", error);
+    return [];
   }
-};
+}
