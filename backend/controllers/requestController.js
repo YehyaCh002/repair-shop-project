@@ -11,26 +11,22 @@ export const fetchRequests = async (req, res) => {
 };
 
 export const getOneRequest = async (req, res) => {
-  console.log("Received request:", req.method, req.url); 
-  console.log("req.params:", req.params); 
-
-  const { id } = req.params;
-
-  if (!id || isNaN(id)) {  // ✅ Ensure ID is a number
-    return res.status(400).json({ message: "Invalid or missing ID parameter" });
-  }
-
   try {
-    const result = await getRepairRequest(parseInt(id)); // ✅ Convert to integer
-    if (result.rows.length > 0) {
-      res.json(result.rows[0]); 
-    } else {
-      res.status(404).json({ message: "Repair request not found" });
+    const { id } = req.params;
+
+    const repair = await getRepairRequest(id);
+
+    if (!repair) {
+      return res.status(404).json({ message: "Repair request not found" });
     }
+
+    res.json(repair);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error fetching repair request:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 export const createRequest = async (req, res) => {
   try {
     const { clientName, phone, device, problem, cost, entryDate, deliveryDate } = req.body;
