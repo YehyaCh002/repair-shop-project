@@ -19,21 +19,21 @@ const RepairEdit = () => {
   });
 
   useEffect(() => {
-    // Fetch existing repair request
     const fetchRepairRequest = async () => {
       try {
         const response = await fetch(`http://localhost:5000/requests/${id}`);
         if (response.ok) {
           const data = await response.json();
+  
           setFormData({
-            clientName: data.client_name,
-            phone: data.phone_number,
-            device: data.device_type,
-            problem: data.problem_description,
-            cost: data.cost,
-            entryDate: data.entry_date,
-            deliveryDate: data.delivery_date,
-            status: data.status,
+            clientName: data.client_name || "",
+            phone: data.phone_number || "",
+            device: data.device_type || "",
+            problem: data.problem_description || "",
+            cost: data.cost || "",
+            entryDate: data.entry_date ? data.entry_date.split("T")[0] : "",
+            deliveryDate: data.delivery_date ? data.delivery_date.split("T")[0] : "",
+            status: data.status || "Not Repaired",
           });
         } else {
           console.error("Failed to fetch repair request");
@@ -42,10 +42,10 @@ const RepairEdit = () => {
         console.error("Error fetching repair request:", error);
       }
     };
-
+  
     fetchRepairRequest();
   }, [id]);
-
+  
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
