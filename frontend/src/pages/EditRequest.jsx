@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiUser, FiPhone, FiTool, FiDollarSign, FiCalendar } from "react-icons/fi";
-import Sidebar from "./Sidebar";
+import Sidebar from "/src/components/Sidebar";
 
 const RepairEdit = () => {
   const { id } = useParams(); // Get ID from URL

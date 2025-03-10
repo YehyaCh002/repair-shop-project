@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import Sidebar from "./Sidebar";
+import Sidebar from "/src/components/Sidebar";
 import { Link } from "react-router-dom";
 import { FiEdit, FiTrash2, FiEye, FiSearch } from "react-icons/fi";
-import { getRepairsRequest } from "../services/api";
+import { getRepairsRequest } from "/src/services/api";
 
 export default function RepairRequests() {
   const [requests, setRequests] = useState([]);

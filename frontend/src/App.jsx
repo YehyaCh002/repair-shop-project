@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import RepairRequests from "./components/RepairRequests";
-import EditRequest from "./components/EditRequest";
-import NewRequest from "./components/NewRequest";
-import HomePage from "./components/Home";
+import RepairRequests from "./pages/RepairRequests";
+import EditRequest from "./pages/EditRequest";
+import NewRequest from "./pages/NewRequest";
+import HomePage from "./pages/Home";
 
 
 function App() {

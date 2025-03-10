@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import NavBar from "../components/NavBar";
 
 export default function HomePage() {
         const [background] = useState("/computerrepair.png");
@@ -19,15 +20,7 @@ export default function HomePage() {
     backgroundImage: `url(${background})`,
   }}
 >   
-<nav className="absolute top-0 left-0 w-full py-2 flex justify-between rounded-b-lg items-center p-6 bg-indigo-950 bg-opacity-50">
-  <h1 className="text-2xl font-light text-white">Fix Me</h1>
-  <ul className="flex space-x-6 text-lg ps-8 mr-128">
-    <li  className="text-white hover:text-indigo-400">Home</li>
-    <li href="/services" className="text-white hover:text-indigo-400">Services</li>
-    <li href="/contact" className="text-white hover:text-indigo-400">Contact Us</li>
-    <li href="/about" className="text-white hover:text-indigo-400">About Us</li>
-  </ul>
-</nav>
+<NavBar />
 
 
       <div className="text-center">

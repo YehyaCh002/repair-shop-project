@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FiUser, FiPhone, FiTool, FiDollarSign, FiCalendar } from "react-icons/fi";
-import Sidebar from "./Sidebar";
+import Sidebar from "/src/components/Sidebar";
 
 const NewRepairRequest = () => {
   const [formData, setFormData] = useState({
