@@ -1,14 +1,12 @@
-import pg from "pg";
+import pkg from "pg";
 import dotenv from "dotenv";
 
-dotenv.config(); // ✅ Load environment variables
+dotenv.config();
+const { Pool } = pkg; // Correctly destructuring Pool
 
-const pool = new pg.Pool({
-  user: "yehya",
-  host: "localhost",
-  database: "repair_shop",
-  password: "Yahiayahiach@24",  // 🔥 Test with hardcoded password
-  port: 5432,
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }, // Required for Neon
 });
 
-export default pool;
+export default pool; // Use ES module export
