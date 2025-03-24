@@ -1,21 +1,20 @@
 import jwt from "jsonwebtoken";
-const JWT_SECRET = process.env.JWT_SECRET;
+
+const SECRET_KEY = process.env.Secret_key;
 
 export const verifyToken = (req, res, next) => {
-  const token = req.header("Authorization")?.split(" ")[1];
-  console.log("Received token:", token);
+    const token = req.header("Authorization")?.split(" ")[1];
+    
+    if (!token) {
+        return res.status(401).json({ error: "Access Denied: No Token Provided" });
+    }
 
-  if (!token) {
-    return res.status(401).json({ message: "Accès refusé, token manquant !" });
-  }
-
-  try {
-    const verified = jwt.verify(token, JWT_SECRET);
-    req.user = verified;
-    next(); // Continuer vers la route suivante
-  } catch (err) {
-    res.status(400).json({ message: "Token invalide !" });
-  }
+    try {
+        const verified = jwt.verify(token, SECRET_KEY);
+        req.workshop = verified; // Store workshop details in request
+        next();
+    } catch (error) {
+        res.status(400).json({ error: "Invalid Token" });
+    }
 };
-
-
+export default { verifyToken };

@@ -1,13 +1,13 @@
 import express from "express";
-import { register,login } from "../controllers/authController.js";
+import { registerWorkshop, loginWorkshop } from "../controllers/authController.js";
 import { verifyToken } from "../middelwares/authMiddleware.js";
 
- const router = express.Router();
+const router = express.Router();
 
-router.post("/register", register);
-router.post("/login", login);
-router.get("/profile", verifyToken, (req, res) => {
-  res.json({ message: "Accès autorisé", userId: req.user.id });
+router.post("/register", registerWorkshop);
+router.post("/login", loginWorkshop);
+router.get("/protected", verifyToken, (req, res) => {
+    res.json({ message: "Access granted!", workshop: req.workshop });
 });
-export default router;
 
+export default router;
