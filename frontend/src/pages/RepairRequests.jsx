@@ -51,7 +51,7 @@ export default function RepairRequests() {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen w-screen">
       <Sidebar />
       <div className="flex-1 p-4 sm:p-6 bg-gray-100 text-black min-h-screen overflow-hidden">
         <div className="flex justify-between items-center mb-4">
