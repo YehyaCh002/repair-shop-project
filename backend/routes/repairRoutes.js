@@ -1,9 +1,16 @@
 import express from 'express';
-import { createRepairRequest ,getRepairsByWorkshop,deleteRepairRequest } from '../controllers/repairController.js';
+import {
+  createRepairRequest,
+  downloadTicket,
+  deleteRepairRequest,
+  getRepairsByWorkshop
+} from '../controllers/repairController.js';
+
 const router = express.Router();
 
 router.post('/post-repairs', createRepairRequest);
-router.get("/get-repairs", getRepairsByWorkshop);
-router.delete("/delete-repairs/:id_repair", deleteRepairRequest);
+router.get('/ticket/:id_repair', downloadTicket);
+router.delete('/delete/:id_repair', deleteRepairRequest);
+router.get('/get-repairs', getRepairsByWorkshop);
 
 export default router;

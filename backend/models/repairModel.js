@@ -4,7 +4,6 @@ import crypto from "crypto";
 export const generateTrackingNumber = () =>
   crypto.randomBytes(8).toString("hex");
 
-// إضافة العميل
 const addClient = async (clientData, clientConn) => {
   const { client_username, client_number, client_email } = clientData;
   const query = `
@@ -17,7 +16,6 @@ const addClient = async (clientData, clientConn) => {
   return res.rows[0].id_client;
 };
 
-// إضافة الجهاز
 const addDevice = async (deviceData, clientConn) => {
   const { device_name, problem_description, device_status } = deviceData;
   const query = `
@@ -30,7 +28,6 @@ const addDevice = async (deviceData, clientConn) => {
   return res.rows[0].id_device;
 };
 
-// البحث على التقني الأقل مشغولية
 export const getLeastBusyTechnician = async () => {
   const query = `
     SELECT t.id_technicien
@@ -44,7 +41,6 @@ export const getLeastBusyTechnician = async () => {
   return rows[0]?.id_technicien || null;
 };
 
-// إضافة طلب إصلاح
 export const addRepairRequest = async (data) => {
   const { client: clientData, device: deviceData, repair: repairData } = data;
   const clientConn = await pool.connect();
@@ -57,14 +53,12 @@ export const addRepairRequest = async (data) => {
     const trackingNumber = generateTrackingNumber();
     const technicienId = await getLeastBusyTechnician();
 
-    if (!technicienId) {
-      throw new Error("No technician available to assign.");
-    }
+    if (!technicienId) throw new Error("No technician available to assign.");
 
     const repairQuery = `
       INSERT INTO repair
-        (id_client, id_device, id_workshop, id_technicien, created_at, tracking_number,repair_status)
-      VALUES ($1,$2,$3,$4,NOW(),$5,COALESCE($6, 'Not repaired'))
+        (id_client, id_device, id_workshop, id_technicien, created_at, tracking_number, repair_status)
+      VALUES ($1, $2, $3, $4, NOW(), $5, COALESCE($6, 'Not repaired'))
       RETURNING *
     `;
     const repairValues = [
@@ -76,7 +70,6 @@ export const addRepairRequest = async (data) => {
       repairData.repair_status
     ];
     const { rows } = await clientConn.query(repairQuery, repairValues);
-
     await clientConn.query('COMMIT');
     return rows[0];
   } catch (error) {
@@ -87,33 +80,25 @@ export const addRepairRequest = async (data) => {
   }
 };
 
-// استرجاع الطلبات حسب الورشة
-export const getRepairsbyWorkshop = async (id_workshop) => {
+export const getRepairDetailsById = async (id_repair) => {
   const query = `
     SELECT
-      r.id_repair, r.tracking_number,r.repair_status,
+      r.id_repair, r.tracking_number, r.repair_status,
       c.client_username, c.client_number,
       d.device_name, d.problem_description,
       r.created_at AS entry_date
     FROM repair r
     JOIN client c ON r.id_client = c.id_client
     JOIN device d ON r.id_device = d.id_device
-    WHERE r.id_workshop = $1
-    ORDER BY r.created_at DESC
+    WHERE r.id_repair = $1
   `;
-  const { rows } = await pool.query(query, [id_workshop]);
-  return rows;
+  const { rows } = await pool.query(query, [id_repair]);
+  return rows[0] || null;
 };
 
 export const deleteRepair = async (id_repair) => {
   const query = `DELETE FROM repair WHERE id_repair = $1 RETURNING *`;
   const values = [id_repair];
-
-  try {
-    const result = await pool.query(query, values);
-    return result.rowCount > 0 ? result.rows[0] : null;
-  } catch (error) {
-    throw new Error("Error deleting repair: " + error.message);
-  }
+  const result = await pool.query(query, values);
+  return result.rowCount > 0 ? result.rows[0] : null;
 };
-
