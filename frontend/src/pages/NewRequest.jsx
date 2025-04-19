@@ -1,158 +1,132 @@
 import { useState } from "react";
-import { FiUser, FiPhone, FiTool, FiDollarSign, FiCalendar } from "react-icons/fi";
+import { FiUser, FiPhone, FiMail, FiTool } from "react-icons/fi";
 import Sidebar from "/src/components/Sidebar";
 
 const NewRepairRequest = () => {
-  const [formData, setFormData] = useState({
-    clientName: "",
-    phone: "",
-    device: "",
-    problem: "",
-    cost: "",
-    entryDate: "",
-    deliveryDate: "",
-  });
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const initialForm = {
+    client_username:     "",
+    client_number:       "",
+    client_email:        "",
+    device_name:         "",
+    problem_description: ""
   };
+  const [formData, setFormData] = useState(initialForm);
+
+  const handleChange = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
+    // build the payload just with client and device
+    const payload = {
+      client: {
+        client_username: formData.client_username,
+        client_number:   formData.client_number,
+        client_email:    formData.client_email,
+      },
+      device: {
+        device_name:         formData.device_name,
+        problem_description: formData.problem_description,
+      },
+    };
+
     try {
-      const response = await fetch("http://localhost:5000/requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+      const res = await fetch("http://localhost:5000/api/post-repairs", {
+        method:      "POST",
+        headers:     { "Content-Type": "application/json" },
+        credentials: "include",            // send your session cookie
+        body:        JSON.stringify(payload),
       });
-  
-      if (response.ok) {
-        const result = await response.json();
-        console.log("Form Submitted Successfully:", result);
-        alert("Repair request submitted!");
-        setFormData({
-          clientName: "",
-          phone: "",
-          device: "",
-          problem: "",
-          cost: "",
-          entryDate: "",
-        });
-      } else {
-        alert("Failed to submit request");
+
+      if (!res.ok) {
+        const err = await res.text();
+        return alert("Error: " + err);
       }
-    } catch (error) {
-      console.error("Error submitting form:", error);
+
+      alert("✅ Repair request submitted!");
+      setFormData(initialForm);          // clear the form
+    } catch (err) {
+      console.error(err);
+      alert("Network error, see console");
     }
   };
-  
 
   return (
-    <div className="flex h-screen ">
-      {/* Sidebar */}
+    <div className="flex h-screen">
       <Sidebar />
-      <div className=" flex h-screen w-screen ">
-      {/* Form Section */}
-      <div className=" w-full flex  bg-gray-100 p-8">
+      <div className="flex flex-1 bg-gray-100 p-8">
         <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-2xl">
           <h2 className="text-2xl font-semibold text-gray-700 text-center mb-6">
             New Repair Request
           </h2>
-
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Client Name */}
             <div className="relative">
               <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
               <input
-                type="text"
-                name="clientName"
-                placeholder="Client Name"
-                value={formData.clientName}
+                name="client_username"
+                value={formData.client_username}
                 onChange={handleChange}
-                className="text-black w-full h-12 pl-10 pr-4 border border-gray-300 rounded text-lg"
+                placeholder="Client Username"
+                className="w-full h-12 pl-10 border border-gray-300 text-black rounded text-lg"
                 required
               />
             </div>
-
-            {/* Phone */}
             <div className="relative">
               <FiPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
               <input
+                name="client_number"
                 type="tel"
-                name="phone"
-                placeholder="Phone Number"
-                value={formData.phone}
+                value={formData.client_number}
                 onChange={handleChange}
-                className="text-black w-full h-12 pl-10 pr-4 border border-gray-300 rounded text-lg"
+                placeholder="Phone Number"
+                className="w-full h-12 pl-10 border border-gray-300 text-black rounded text-lg"
                 required
               />
             </div>
-
-            {/* Device */}
+            <div className="relative">
+              <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
+              <input
+                name="client_email"
+                type="email"
+                value={formData.client_email}
+                onChange={handleChange}
+                placeholder="Email Address"
+                className="w-full h-12 pl-10 border border-gray-300 text-black rounded text-lg"
+                required
+              />
+            </div>
             <div className="relative">
               <FiTool className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
               <input
-                type="text"
-                name="device"
-                placeholder="Device Type"
-                value={formData.device}
+                name="device_name"
+                value={formData.device_name}
                 onChange={handleChange}
-                className="text-black w-full h-12 pl-10 pr-4 border border-gray-300 rounded text-lg"
+                placeholder="Device Name"
+                className="w-full h-12 pl-10 border border-gray-300 text-black rounded text-lg"
                 required
               />
             </div>
-
-            {/* Problem Description */}
             <textarea
-              name="problem"
-              placeholder="Problem Description"
-              value={formData.problem}
+              name="problem_description"
+              value={formData.problem_description}
               onChange={handleChange}
-              className="text-black w-full h-24 p-3 border border-gray-300 rounded text-lg"
+              placeholder="Problem Description"
+              className="w-full h-24 p-3 border border-gray-300 text-black rounded text-lg"
               required
             />
 
-            {/* Cost */}
-            <div className="relative">
-              <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
-              <input
-                type="number"
-                name="cost"
-                placeholder="Estimated Cost ($)"
-                value={formData.cost}
-                onChange={handleChange}
-                className="text-black w-full h-12 pl-10 pr-4 border border-gray-300 rounded text-lg"
-               
-              />
-            </div>
-
-            {/* Entry Date */}
-            <div className="relative">
-              <FiCalendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
-              <input
-                type="date"
-                name="entryDate"
-                value={formData.entryDate}
-                onChange={handleChange}
-                className="text-black w-full h-12 pl-10 pr-4 border border-gray-300 rounded text-lg"
-                required
-              />
-            </div>
-
-            
-            {/* Buttons */}
-            <div className="flex justify-between mt-4">
+            <div className="flex justify-end gap-4 mt-4">
               <button
                 type="button"
-                className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all"
+                onClick={() => setFormData(initialForm)}
+                className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg"
               >
                 Cancel
               </button>
-
               <button
                 type="submit"
-                className="bg-gray-700 hover:bg-gray-800 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all"
+                className="bg-gray-700 hover:bg-gray-800 text-white font-semibold py-2 px-4 rounded-lg"
               >
                 Submit Request
               </button>
@@ -160,7 +134,6 @@ const NewRepairRequest = () => {
           </form>
         </div>
       </div>
-    </div>
     </div>
   );
 };

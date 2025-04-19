@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { getAllWilayas, getCommunesByWilaya } from "algerian-geo";
 import { createWorkshop, findWorkshopByEmail } from "../models/authModel.js";
 
-const SECRET_KEY = process.env.SECRET_KEY; // Ensure .env uses SECRET_KEY
+const SECRET_KEY = process.env.SECRET_KEY;
 
 export const registerWorkshop = async (req, res) => {
   const { 
@@ -12,12 +12,11 @@ export const registerWorkshop = async (req, res) => {
     workshop_number, 
     repair_specialisation, 
     workshop_gmail, 
-    workshop_password, // client must send this key!
+    workshop_password,
     wilaya, 
     commune 
   } = req.body;
 
-  // Validate input types
   if (!wilaya || typeof wilaya !== "string") {
     return res.status(400).json({ error: "Wilaya must be provided as a string" });
   }
@@ -27,56 +26,85 @@ export const registerWorkshop = async (req, res) => {
   if (!workshop_password) {
     return res.status(400).json({ error: "Password is required" });
   }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(workshop_gmail)) {
+    return res.status(400).json({ error: "Invalid email format" });
+  }
 
   try {
-    // Validate Wilaya
     const allWilayas = getAllWilayas();
-    console.log("All Wilayas:", allWilayas.map(w => w.name)); // Debug logging
-    // Find the wilaya object that matches the input (ignoring case and extra spaces)
-    const wilayaData = allWilayas.find(w => (w.name || "").toLowerCase() === wilaya.trim().toLowerCase());
+    let wilayaData;
+    const codeAsNumber = parseInt(wilaya, 10);
+    if (!isNaN(codeAsNumber)) {
+      wilayaData = allWilayas.find(w => w.code === codeAsNumber);
+    } else {
+      wilayaData = allWilayas.find(
+        w => (w.name || "").toLowerCase() === wilaya.trim().toLowerCase()
+      );
+    }
+
     if (!wilayaData) {
       return res.status(400).json({ error: "Invalid Wilaya" });
     }
 
-    console.log("All Communes for Wilaya", wilaya, ":", allCommunes.map(c => c.name)); // Debug logging
-    const validCommune = allCommunes.some(c => (c.name || "").toLowerCase() === commune.trim().toLowerCase());
+    const allCommunes = getCommunesByWilaya(wilayaData.code);
+    let validCommune;
+    const communeCode = parseInt(commune, 10);
+    if (!isNaN(communeCode)) {
+      validCommune = allCommunes.some(c => c.code === communeCode);
+    } else {
+      validCommune = allCommunes.some(
+        c => (c.name || "").toLowerCase() === commune.trim().toLowerCase()
+      );
+    }
+
     if (!validCommune) {
       return res.status(400).json({ error: "Invalid Commune" });
     }
 
-    // Check if the workshop already exists
     const existingWorkshop = await findWorkshopByEmail(workshop_gmail);
     if (existingWorkshop) {
       return res.status(400).json({ error: "Workshop already exists" });
     }
 
-    // Hash password using bcrypt
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(workshop_password, salt);
 
-    // Create workshop
-    const newWorkshop = await createWorkshop({ 
+    const newWorkshop = await createWorkshop({
       workshop_name, 
       workshop_adresse, 
       workshop_number, 
       repair_specialisation, 
       workshop_gmail, 
       workshop_password: hashedPassword, 
-      wilaya, 
-      commune
+      wilaya,   
+      commune  
     });
 
-    // Generate JWT token
     const token = jwt.sign(
-      { id: newWorkshop.id, workshop_gmail: newWorkshop.workshop_gmail },
+      { id: newWorkshop.id_workshop, workshop_gmail: newWorkshop.workshop_gmail },
       SECRET_KEY,
       { expiresIn: "1h" }
     );
 
-    res.status(201).json({ 
-      message: "Workshop registered successfully", 
+    req.session.token = token;
+    req.session.user = {
+      id_workshop: newWorkshop.id_workshop,
+      workshop_gmail: newWorkshop.workshop_gmail
+    };
+    
+
+    req.session.save(err => {
+      if (err) {
+        console.error("Error saving session:", err);
+      } else {
+        console.log("Session saved successfully:", req.session);
+      }
+    });
+
+    res.status(200).json({ 
+      message: "Registration successful",
       workshop: newWorkshop, 
-      token 
+      token // ✅ أضف التوكن هنا
     });
   } catch (error) {
     console.error("Error registering workshop:", error);
@@ -87,34 +115,55 @@ export const registerWorkshop = async (req, res) => {
 export const loginWorkshop = async (req, res) => {
   const { workshop_gmail, password } = req.body;
   try {
-    // Find workshop by email
     const existingWorkshop = await findWorkshopByEmail(workshop_gmail);
     if (!existingWorkshop) {
       return res.status(400).json({ error: "Invalid credentials" });
     }
 
-    // Validate password: note that in the database we saved it as workshop_password
     const isPasswordValid = await bcrypt.compare(password, existingWorkshop.workshop_password);
     if (!isPasswordValid) {
       return res.status(400).json({ error: "Invalid credentials" });
     }
 
-    // Generate JWT token
     const token = jwt.sign(
-      { id: existingWorkshop.id, workshop_gmail: existingWorkshop.workshop_gmail },
+      { id: existingWorkshop.id_workshop, workshop_gmail: existingWorkshop.workshop_gmail },
       SECRET_KEY,
       { expiresIn: "1h" }
     );
 
+    req.session.token = token;
+    req.session.user = {
+      id_workshop: existingWorkshop.id_workshop,
+      workshop_gmail: existingWorkshop.workshop_gmail
+    };
+    
+
+    req.session.save(err => {
+      if (err) {
+        console.error("Error saving session:", err);
+      } else {
+        console.log("Session saved successfully:", req.session);
+      }
+    });
+
     res.status(200).json({ 
       message: "Login successful", 
       workshop: existingWorkshop, 
-      token 
+      token // ✅ أضف التوكن هنا
     });
   } catch (error) {
     console.error("Server Error", error);
     res.status(500).json({ error: "Login failed" });
   }
 };
-
-export default { registerWorkshop, loginWorkshop };
+export const checkSession = (req, res) => {
+  if (req.session && req.session.user) {
+    res.status(200).json({
+      loggedIn: true,
+      user: req.session.user
+    });
+  } else {
+    res.status(401).json({ loggedIn: false });
+  }
+};
+export default { registerWorkshop, loginWorkshop ,checkSession };

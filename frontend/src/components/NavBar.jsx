@@ -56,12 +56,12 @@ export default function NavBar() {
       </ul>
 
       <ul className="flex space-x-4 text-lg">
-        <li className="block p-2 !text-white !no-underline hover:!text-indigo-400">
+        <Link to="/login"><li className="block p-2 !text-white !no-underline hover:!text-indigo-400">
           Login
-        </li>
-        <li className="block p-2 !text-white !no-underline hover:!text-indigo-400">
+        </li></Link>
+        <Link to="/Signup"><li className="block p-2 !text-white !no-underline hover:!text-indigo-400">
           Register
-        </li>
+        </li></Link>
       </ul>
     </nav>
   );

@@ -1,47 +1,70 @@
-import { useEffect, useState } from "react";
-import Sidebar from "/src/components/Sidebar";
-import { Link } from "react-router-dom";
+import { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/authContext";
+import Sidebar from "../components/Sidebar";
 import { FiEdit, FiTrash2, FiEye, FiSearch } from "react-icons/fi";
-import { getRepairsRequest } from "/src/services/api";
 
 export default function RepairRequests() {
+  const { user, loading: authLoading } = useContext(AuthContext);
   const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const navigate = useNavigate();
 
-  // ✅ Fetch repair requests from API
   useEffect(() => {
-    const fetchData = async () => {
+    if (authLoading) return;
+    if (!user?.id_workshop) {
+      navigate("/login");
+    }
+  }, [authLoading, user, navigate]);
+
+  useEffect(() => {
+    if (authLoading || !user?.id_workshop) return;
+
+    const fetchRepairRequests = async () => {
+      setLoading(true);
+      setError("");
       try {
-        const data = await getRepairsRequest();
-        console.log("Fetched Data in Component:", data);
+        const response = await fetch(
+          `http://localhost:5000/api/get-repairs`,
+          { credentials: 'include' }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch repair requests");
+        }
+
+        const data = await response.json();
+        console.log("Fetched Repair Requests:", data);
+
         if (Array.isArray(data)) {
-          setRequests(data); // ✅ Only set if it's an array
+          setRequests(data);
         } else {
           console.error("Unexpected data format:", data);
-          setRequests([]); // Ensure state is reset if data is invalid
+          setRequests([]);
         }
-      } catch (error) {
-        console.error("Error fetching repair requests:", error);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
     };
-  
-    fetchData();
-  }, []);
-  
 
-  // ✅ Delete Function
+    fetchRepairRequests();
+  }, [authLoading, user]);
+
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this repair request?")) {
-      return; // ✅ Stop if user cancels
-    }
+    if (!window.confirm("Are you sure you want to delete this repair request?")) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/requests/${id}`, {
+      const response = await fetch(`http://localhost:5000/api/delete-repairs/${id}`, {
         method: "DELETE",
+        credentials: 'include'
       });
-
+      
       if (response.ok) {
-        setRequests((prevRequests) => prevRequests.filter((req) => req.id !== id)); // ✅ Correct state update
+        setRequests((prev) => prev.filter((req) => req.id_repair !== id));
       } else {
         console.error("Failed to delete the repair request.");
       }
@@ -49,6 +72,9 @@ export default function RepairRequests() {
       console.error("Error deleting repair request:", error);
     }
   };
+
+  if (authLoading || loading) return <div className="text-center p-6">Loading repair requests...</div>;
+  if (error) return <div className="text-red-500 text-center p-6">{error}</div>;
 
   return (
     <div className="flex h-screen w-screen">
@@ -66,80 +92,92 @@ export default function RepairRequests() {
             />
           </div>
 
-          <Link to="/new-request">
-            <button className="bg-gray-700 hover:bg-gray-800 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all ml-4">
-              + New Repair Request
-            </button>
-          </Link>
+          <button
+            onClick={() => navigate("/new-request")}
+            className="bg-gray-700 hover:bg-gray-800 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all ml-4"
+          >
+            + New Repair Request
+          </button>
         </div>
 
-        {/* Repair Requests Table */}
         <div className="bg-white rounded-lg shadow-md p-4">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-gray-200 text-gray-700 text-center">
+                  <th className="p-3 border">id_request</th>
                   <th className="p-3 border">Client Name</th>
                   <th className="p-3 border">Phone</th>
                   <th className="p-3 border">Device</th>
                   <th className="p-3 border">Problem</th>
                   <th className="p-3 border">Status</th>
-                  <th className="p-3 border">Cost ($)</th>
+                  <th className="p-3 border">Tracking Number</th>
                   <th className="p-3 border">Entry Date</th>
-                  <th className="p-3 border">Delivery Date</th>
                   <th className="p-3 border">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {requests.length === 0 ? (
-                  <tr>
-                    <td colSpan="9" className="text-center p-4">
-                      No repair requests found.
-                    </td>
-                  </tr>
-                ) : (
-                  requests
-                    .filter((req) =>
-                      req.client_name?.toLowerCase().includes(search.toLowerCase()) // ✅ Ensure `client_name` exists
-                    )
-                    .map((req) => (
-                      <tr key={req.id} className="hover:bg-gray-100">
-                        <td className="p-3 border">{req.client_name}</td>
-                        <td className="p-3 border">{req.phone_number}</td>
-                        <td className="p-3 border">{req.device_type}</td>
-                        <td className="p-3 border">{req.problem_description}</td>
-                        <td className="p-3 border">
-                          <span
-                            className={`px-2 py-1 text-sm font-semibold rounded 
-                            ${
-                              req.status === "Not Repaired"
-                                ? "bg-red-200 text-red-800"
-                                : req.status === "In Progress"
-                                ? "bg-yellow-200 text-yellow-800"
-                                : "bg-green-200 text-green-800"
-                            }`}
-                          >
-                            {req.status || "Unknown"} {/* ✅ Handle empty status */}
-                          </span>
-                        </td>
-                        <td className="p-3 border">${req.cost}</td>
-                        <td className="p-3 border">{req.entry_date}</td>
-                        <td className="p-3 border">{req.delivery_date || "N/A"}</td>
-                        <td className="p-3 border flex gap-3 justify-center">
-                          <FiEye className="text-blue-500 text-xl cursor-pointer hover:text-blue-700" title="View" />
-                          <Link to={`/edit-request/${req.id}`}>
-                            <FiEdit className="text-green-500 text-xl cursor-pointer hover:text-green-700" title="Edit" />
-                          </Link>
-                          <FiTrash2
-                            className="text-red-500 text-xl cursor-pointer hover:text-red-700"
-                            title="Delete"
-                            onClick={() => handleDelete(req.id)}
-                          />
-                        </td>
-                      </tr>
-                    ))
-                )}
-              </tbody>
+  {requests.length === 0 ? (
+    <tr>
+      <td colSpan="9" className="text-center p-4">
+        No repair requests found.
+      </td>
+    </tr>
+  ) : (
+    requests
+      .filter((req) =>
+        req.client_username?.toLowerCase().includes(search.toLowerCase())  // مطابق تمامًا
+      )
+      .map((req) => (
+        <tr key={req.id_repair} className="hover:bg-gray-100">
+          <td className="p-3 border">{req.id_repair}</td>
+          <td className="p-3 border">{req.client_username}</td>
+          <td className="p-3 border">{req.client_number}</td>
+          <td className="p-3 border">{req.device_name}</td>
+          <td className="p-3 border">{req.problem_description}</td>
+          <td className="p-3 border">
+            <span
+              className={`px-2 py-1 text-sm font-semibold rounded 
+              ${
+                req.repair_status === "Not repaired"
+                  ? "bg-red-200 text-red-800"
+                  : req.repair_status === "In Progress"
+                  ? "bg-yellow-200 text-yellow-800"
+                  : "bg-green-200 text-green-800"
+              }`}
+            >
+              {req.repair_status || "Unknown"}
+            </span>
+          </td>
+          <td className="p-3 border">
+            {req.tracking_number || "Not specified"}
+          </td>
+          <td className="p-3 border">
+            {req.entry_date
+              ? new Date(req.entry_date).toLocaleDateString()
+              : "Not specified"}
+          </td>
+          <td className="p-3 border flex gap-3 justify-center">
+            <FiEye
+              className="text-blue-500 text-xl cursor-pointer hover:text-blue-700"
+              title="View"
+              onClick={() => navigate(`/repair-request/${req.id_repair}`)}
+            />
+            <FiEdit
+              className="text-green-500 text-xl cursor-pointer hover:text-green-700"
+              title="Edit"
+              onClick={() => navigate(`/edit-repair-request/${req.id_repair}`)}
+            />
+            <FiTrash2
+              className="text-red-500 text-xl cursor-pointer hover:text-red-700"
+              title="Delete"
+              onClick={() => handleDelete(req.id_repair)}
+            />
+          </td>
+        </tr>
+      ))
+  )}
+</tbody>
             </table>
           </div>
         </div>

@@ -1,20 +1,27 @@
 import jwt from "jsonwebtoken";
 
-const SECRET_KEY = process.env.Secret_key;
-
 export const verifyToken = (req, res, next) => {
-    const token = req.header("Authorization")?.split(" ")[1];
-    
-    if (!token) {
-        return res.status(401).json({ error: "Access Denied: No Token Provided" });
-    }
+  let token;
 
-    try {
-        const verified = jwt.verify(token, SECRET_KEY);
-        req.workshop = verified; // Store workshop details in request
-        next();
-    } catch (error) {
-        res.status(400).json({ error: "Invalid Token" });
-    }
+  // نحاول نجيب التوكن من الجلسة أو من الهيدر
+  if (req.session && req.session.token) {
+    token = req.session.token;
+  } else if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer ")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(403).json({ error: "Invalid token" });
+  }
 };
-export default { verifyToken };

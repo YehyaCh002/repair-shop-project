@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import {getAllWilayas, getCommunesByWilayaCode } from "algerian-geo";
+import { getAllWilayas, getCommunesByWilayaCode } from "algerian-geo";
 
 export default function Signup() {
   const [formData, setFormData] = useState({
     workshop_name: "",
-    owner_email: "",
+    workshop_gmail: "",
     workshop_password: "",
     workshop_number: "",
+    repair_specialisation: "",
     wilaya: "",
     commune: "",
     workshop_adresse: "",
@@ -15,17 +16,26 @@ export default function Signup() {
   const [wilayas, setWilayas] = useState([]);
   const [communes, setCommunes] = useState([]);
 
+  // Load wilayas on mount
   useEffect(() => {
-    setWilayas(getAllWilayas()); // Fetch wilayas on mount
+    setWilayas(getAllWilayas());
   }, []);
 
+  // When formData.wilaya (the name) changes, find its code and load corresponding communes.
   useEffect(() => {
-    if (formData.wilaya) {
-      setCommunes(getCommunesByWilayaCode(formData.wilaya)); // Fetch communes dynamically
+    if (formData.wilaya && wilayas.length > 0) {
+      const selectedWilaya = wilayas.find(
+        (w) => w.name.toLowerCase() === formData.wilaya.trim().toLowerCase()
+      );
+      if (selectedWilaya) {
+        setCommunes(getCommunesByWilayaCode(selectedWilaya.code));
+      } else {
+        setCommunes([]);
+      }
     } else {
       setCommunes([]);
     }
-  }, [formData.wilaya]);
+  }, [formData.wilaya, wilayas]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,106 +48,74 @@ export default function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Form Data:", formData); // Debugging
+    const all = getAllWilayas();
+    console.table(all);
+   
+
     try {
       const response = await fetch("http://localhost:5000/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
-    }
-  );
+      });
+
       if (response.ok) {
         const result = await response.json();
         console.log("Form Submitted Successfully:", result);
         alert("Workshop registered successfully!");
+
+        // Reset form
         setFormData({
           workshop_name: "",
-          owner_email: "",
+          workshop_gmail: "",
           workshop_password: "",
           workshop_number: "",
+          repair_specialisation: "",
           wilaya: "",
           commune: "",
-          workshop_addresse: "",
+          workshop_adresse: "",
         });
+      } else {
+        const errorData = await response.json();
+        alert("Failed to register workshop: " + (errorData.error || "Unknown error"));
+        console.error("Error response:", errorData);
       }
-    else {
-        alert("Failed to register workshop");
+    } catch (error) {
+      console.error("Error submitting form:", error);
     }
-  } catch (error) {
-        console.error("Error submitting form:", error);
-  };}
+  };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-indigo-700 via-indigo-950 to-indigo-900 p-4">
       <div className="relative w-full max-w-[900px]">
         <div className="absolute inset-0 bg-white/20 rounded-2xl shadow-xl -rotate-3 translate-x-2 translate-y-3 backdrop-blur-lg" />
 
-        <form
-          onSubmit={handleSubmit}
-          className="relative z-10 bg-white p-8 rounded-2xl shadow-lg"
-        >
-          <h1 className="text-2xl font-bold text-center text-indigo-900 mb-6">
-            Workshop Registration
-          </h1>
+        <form onSubmit={handleSubmit} className="relative z-10 bg-white p-8 rounded-2xl shadow-lg">
+          <h1 className="text-2xl font-bold text-center text-indigo-900 mb-6">Workshop Registration</h1>
 
-          {/* All Inputs in One Step */}
+          {/* Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col">
-              <label className="text-gray-700 font-medium mb-1">
-                Workshop Name
-              </label>
-              <input
-                type="text"
-                name="workshop_name"
-                placeholder="Enter workshop name"
-                value={formData.workshop_name}
-                onChange={handleChange}
-                className="border border-gray-300 rounded-lg px-4 py-2 text-black"
-                required
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-gray-700 font-medium mb-1">
-                Owner Email
-              </label>
-              <input
-                type="email"
-                name="owner_email"
-                placeholder="Enter owner email"
-                value={formData.owner_email}
-                onChange={handleChange}
-                className="border border-gray-300 rounded-lg px-4 py-2 text-black"
-                required
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-gray-700 font-medium mb-1">Password</label>
-              <input
-                type="password"
-                name="password"
-                placeholder="Enter password"
-                value={formData.password}
-                onChange={handleChange}
-                className="border border-gray-300 rounded-lg px-4 py-2 text-black"
-                required
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-gray-700 font-medium mb-1">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                name="phone_number"
-                placeholder="Enter phone number"
-                value={formData.phone_number}
-                onChange={handleChange}
-                className="border border-gray-300 rounded-lg px-4 py-2 text-black"
-                required
-              />
-            </div>
+            {[
+              { label: "Workshop Name", name: "workshop_name", type: "text" },
+              { label: "Owner Email", name: "workshop_gmail", type: "email" },
+              { label: "Password", name: "workshop_password", type: "password" },
+              { label: "Phone Number", name: "workshop_number", type: "tel" },
+              { label: "Repair Specialisation", name: "repair_specialisation", type: "text" },
+              { label: "Address", name: "workshop_adresse", type: "text" },
+            ].map(({ label, name, type }) => (
+              <div key={name} className="flex flex-col">
+                <label className="text-gray-700 font-medium mb-1">{label}</label>
+                <input
+                  type={type}
+                  name={name}
+                  placeholder={`Enter ${label.toLowerCase()}`}
+                  value={formData[name]}
+                  onChange={handleChange}
+                  className="border border-gray-300 rounded-lg px-4 py-2 text-black"
+                  required
+                />
+              </div>
+            ))}
 
             {/* Wilaya Selection */}
             <div className="flex flex-col">
@@ -151,7 +129,8 @@ export default function Signup() {
               >
                 <option value="">Select wilaya</option>
                 {wilayas.map((wilaya) => (
-                  <option key={wilaya.code} value={wilaya.code} className="text-black">
+                  // Use the name as the value so backend receives a name
+                  <option key={wilaya.code} value={wilaya.name} className="text-black">
                     {wilaya.name}
                   </option>
                 ))}
@@ -170,32 +149,16 @@ export default function Signup() {
               >
                 <option value="">Select commune</option>
                 {communes.map((commune) => (
-                  <option key={commune.code} value={commune.code} className="text-black">
+                  // Use the name as the value so backend receives a name
+                  <option key={commune.code} value={commune.name} className="text-black">
                     {commune.name}
                   </option>
                 ))}
               </select>
             </div>
-
-            <div className="flex flex-col">
-              <label className="text-gray-700 font-medium mb-1">Address</label>
-              <input
-                type="text"
-                name="address"
-                placeholder="Enter workshop address"
-                value={formData.address}
-                onChange={handleChange}
-                className="border border-gray-300 rounded-lg px-4 py-2 text-black"
-                required
-              />
-            </div>
           </div>
-
           {/* Submit Button */}
-          <button
-            type="submit"
-            className="mt-6 bg-indigo-900 hover:bg-indigo-800 text-white font-semibold py-3 rounded-lg w-full"
-          >
+          <button type="submit" className="mt-6 bg-indigo-900 hover:bg-indigo-800 text-white font-semibold py-3 rounded-lg w-full">
             Register Workshop
           </button>
         </form>

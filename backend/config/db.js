@@ -9,4 +9,4 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }, // Required for Neon
 });
 
-export default pool; // Use ES module export
+export default pool; 

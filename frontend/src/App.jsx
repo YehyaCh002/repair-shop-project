@@ -1,39 +1,80 @@
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import RepairRequests from "./pages/RepairRequests";
-import EditRequest from "./pages/EditRequest";
-import NewRequest from "./pages/NewRequest";
+// App.jsx
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/authProvider";     
+import ProtectedRoute from "./context/protectedRoutes";
 import HomePage from "./pages/Home";
-<<<<<<< HEAD
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import RepairRequests from "./pages/RepairRequests";
+import NewRequest from "./pages/NewRequest";
+import EditRequest from "./pages/EditRequest";
 import TechniciansPage from "./pages/TechniciansPage";
+import NewTechnician from "./pages/NewTechnician";
 import EditTechnician from "./pages/EditTechnician";
-
-=======
-import  Signup  from "./pages/Signup";
->>>>>>> 5d1bee0 (commit before first branch)
 
 function App() {
   return (
-    <Router> 
-   <div className="App">
-   <Routes>
-          <Route path="/" element={<RepairRequests />} />
-          <Route path="/repair-requests" element={<RepairRequests />} />
-          <Route path="/new-request" element={<NewRequest />} />
-          <Route path="/edit-request/:id" element={<EditRequest />} />
+    <AuthProvider>            {/* ← لفّ هنا */}
+      <Router>
+        <Routes>
+          {/* Public routes */}
           <Route path="/home" element={<HomePage />} />
-<<<<<<< HEAD
-          <Route path="/technicians" element={<TechniciansPage />}></Route>
-          <Route path="/edit-technician/:id" element={<EditTechnician />}></Route>
-
-=======
+          <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
->>>>>>> 5d1bee0 (commit before first branch)
-        </Routes>     
 
-    </div>
-    </Router>
-
-    );
+          {/* Admin-only routes */}
+          <Route
+            path="/repair-requests"
+            element={
+              <ProtectedRoute>
+                <RepairRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/new-request"
+            element={
+              <ProtectedRoute>
+                <NewRequest />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/edit-request/:id"
+            element={
+              <ProtectedRoute>
+                <EditRequest />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/technicians"
+            element={
+              <ProtectedRoute>
+                <TechniciansPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/new-technician"
+            element={
+              <ProtectedRoute>
+                <NewTechnician />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/edit-technician/:id"
+            element={
+              <ProtectedRoute>
+                <EditTechnician />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
 }
 
 export default App;

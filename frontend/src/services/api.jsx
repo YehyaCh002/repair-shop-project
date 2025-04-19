@@ -1,6 +1,6 @@
 export async function getRepairsRequest() {
   try {
-    const response = await fetch("http://localhost:5000/requests");
+    const response = await fetch("http://localhost:5000/api/get-repairs/1");
     const data = await response.json();
     console.log("Fetched Data from API:", data); // Ensure this logs correctly
     return data;

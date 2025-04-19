@@ -16,10 +16,46 @@ export default function Sidebar() {
 
         <li className="mb-2 hover:bg-gray-700 rounded">
           <Link
-            to="/Technicians"
+            to="/technicians"
             className="block p-2 !text-white !no-underline hover:!text-gray-200"
           >
             Technicians
+          </Link>
+        </li>
+
+        <li className="mb-2 hover:bg-gray-700 rounded">
+          <Link
+            to="/clients"
+            className="block p-2 !text-white !no-underline hover:!text-gray-200"
+          >
+            Clients
+          </Link>
+        </li>
+
+        <li className="mb-2 hover:bg-gray-700 rounded">
+          <Link
+            to="/devices"
+            className="block p-2 !text-white !no-underline hover:!text-gray-200"
+          >
+            Devices
+          </Link>
+        </li>
+
+        <li className="mb-2 hover:bg-gray-700 rounded">
+          <Link
+            to="/fix-records"
+            className="block p-2 !text-white !no-underline hover:!text-gray-200"
+          >
+            Fix Records
+          </Link>
+        </li>
+
+        <li className="mb-2 hover:bg-gray-700 rounded">
+          <Link
+            to="/settings"
+            className="block p-2 !text-white !no-underline hover:!text-gray-200"
+          >
+            Settings
           </Link>
         </li>
       </ul>
