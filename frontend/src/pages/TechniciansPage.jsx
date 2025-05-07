@@ -81,7 +81,7 @@ export default function TechniciansPage() {
             <input
               type="text"
               placeholder="Search technicians..."
-              className="w-full h-12 pl-10 border border-gray-300 rounded shadow text-lg"
+              className="w-full h-12 pl-10 border border-gray-300 rounded shadow text-lg text-black"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />

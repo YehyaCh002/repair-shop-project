@@ -23,23 +23,7 @@ export default function Sidebar() {
           </Link>
         </li>
 
-        <li className="mb-2 hover:bg-gray-700 rounded">
-          <Link
-            to="/clients"
-            className="block p-2 !text-white !no-underline hover:!text-gray-200"
-          >
-            Clients
-          </Link>
-        </li>
-
-        <li className="mb-2 hover:bg-gray-700 rounded">
-          <Link
-            to="/devices"
-            className="block p-2 !text-white !no-underline hover:!text-gray-200"
-          >
-            Devices
-          </Link>
-        </li>
+        
 
         <li className="mb-2 hover:bg-gray-700 rounded">
           <Link

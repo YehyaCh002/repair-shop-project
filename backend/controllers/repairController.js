@@ -1,111 +1,157 @@
+import os from 'os';
 import fs from 'fs';
 import path from 'path';
 import QRCode from 'qrcode';
 import PDFDocument from 'pdfkit';
 import {
-  addRepairRequest as modelCreate,
+  addRepairRequest   as modelCreate,
   getRepairDetailsById as modelFetchDetails,
-  deleteRepair as modelDelete,
-  getRepairDetailsById as modelGetAll
+  getRepairsByWorkshop as modelGetAll,
+  deleteRepair         as modelDelete,
+  updateRepair         as modelUpdate,
+  getRepairById        as modelGetone
 } from '../models/repairModel.js';
 
-// 🎯 إضافة طلب إصلاح + إنشاء PDF
+// ترجع أول IPv4 داخلي
+function getLocalIp() {
+  const nets = os.networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      if (net.family === 'IPv4' && !net.internal) {
+        return net.address;
+      }
+    }
+  }
+  return '127.0.0.1';
+}
+
 export const createRepairRequest = async (req, res) => {
   try {
     const { client, device } = req.body;
     const id_workshop = req.session.user?.id_workshop;
     if (!id_workshop) return res.status(401).json({ message: 'Not authorized' });
 
-    const newRepair = await modelCreate({
-      client,
-      device,
-      repair: { id_workshop }
-    });
-
-    const detailed = await modelFetchDetails(newRepair.id_repair);
+    const newRepair = await modelCreate({ client, device, repair: { id_workshop } });
+    const detailed  = await modelFetchDetails(newRepair.id_repair);
     if (!detailed) return res.status(500).json({ message: 'Could not fetch repair details' });
 
-    await generateRepairTicket(detailed);
+    const serverIp    = getLocalIp();
+    const downloadUrl = `http://${serverIp}:5000/api/repair/ticket/${detailed.id_repair}`;
 
-    const downloadUrl = `${req.protocol}://${req.get('host')}/api/repair/ticket/${detailed.id_repair}`;
-    res.status(201).json({ ...detailed, ticketUrl: downloadUrl });
+    await generateRepairTicket(detailed, downloadUrl);
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message });
+    return res.status(201).json({ ...detailed, ticketUrl: downloadUrl });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: err.message });
   }
 };
 
-// 🎯 حذف طلب إصلاح
-export const deleteRepairRequest = async (req, res) => {
-  const { id_repair } = req.params;
-  try {
-    const deletedRepair = await modelDelete(id_repair);
-    if (!deletedRepair) {
-      return res.status(404).json({ message: "Repair request not found" });
-    }
-    res.status(200).json({ message: "Repair request deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting repair request:", error);
-    res.status(500).json({ message: "Error deleting repair request" });
-  }
-};
-
-// 🎯 جلب جميع الطلبات الخاصة بورشة العمل
 export const getRepairsByWorkshop = async (req, res) => {
   const id_workshop = req.session.user?.id_workshop;
-  if (!id_workshop) return res.status(401).json({ message: "Not authorized" });
+  if (!id_workshop) return res.status(401).json({ message: 'Not authorized' });
 
   try {
     const repairs = await modelGetAll(id_workshop);
-    res.status(200).json(repairs);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(200).json(repairs);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: err.message });
   }
 };
 
-// 🎯 تحميل ملف PDF الخاص بالتذكرة
-export const downloadTicket = async (req, res) => {
+export const deleteRepairRequest = async (req, res) => {
   const { id_repair } = req.params;
   try {
-    const detailed = await modelFetchDetails(id_repair);
-    if (!detailed) return res.status(404).json({ message: "Repair not found" });
-
-    const ticketPath = path.join('tickets', `ticket_${id_repair}.pdf`);
-    if (!fs.existsSync(ticketPath)) {
-      await generateRepairTicket(detailed);
-    }
-    res.download(ticketPath);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message });
+    const deleted = await modelDelete(id_repair);
+    if (!deleted) return res.status(404).json({ message: 'Not found' });
+    return res.status(200).json({ message: 'Deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: err.message });
   }
 };
 
-// 🎯 توليد ملف التذكرة PDF
-const generateRepairTicket = async (repair) => {
-  const doc = new PDFDocument();
-  const ticketPath = path.join('tickets', `ticket_${repair.id_repair}.pdf`);
+export const getOneRequest = async (req, res) => {
+  const { id_repair } = req.params;
+  try {
+    const repair = await modelGetone(id_repair);
+    if (!repair) return res.status(404).json({ message: 'Not found' });
+    return res.status(200).json(repair);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: err.message });
+  }
+};
 
-  const qrData = `Tracking Number: ${repair.tracking_number}`;
-  const qrCode = await QRCode.toDataURL(qrData);
+export const updateRepairRequest = async (req, res) => {
+  const { id_repair } = req.params;
+  const { repair_status, tracking_number, cost } = req.body;
+  try {
+    const updated = await modelUpdate(id_repair, { repair_status, tracking_number, cost });
+    if (!updated) return res.status(404).json({ message: 'Not found' });
+    return res.status(200).json(updated);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: err.message });
+  }
+};
 
-  if (!fs.existsSync('tickets')) fs.mkdirSync('tickets');
+export const downloadTicket = async (req, res) => {
+  const { id_repair } = req.params;
+  const detailed = await modelFetchDetails(id_repair);
+  if (!detailed) return res.status(404).json({ message: 'Not found' });
 
-  doc.pipe(fs.createWriteStream(ticketPath));
+  const ticketDir  = path.join(process.cwd(), 'tickets');
+  const ticketPath = path.join(ticketDir, `ticket_${id_repair}.pdf`);
+  if (!fs.existsSync(ticketDir)) fs.mkdirSync(ticketDir);
 
-  doc.image(Buffer.from(qrCode.split(",")[1], 'base64'), 450, 20, { width: 100 });
-  doc.fontSize(16).text(`Repair Request Ticket`, { align: 'center' });
-  doc.moveDown();
+  const serverIp    = getLocalIp();
+  const downloadUrl = `http://${serverIp}:5000/api/repair/ticket/${id_repair}`;
+  await generateRepairTicket(detailed, downloadUrl);
 
-  doc.fontSize(12).text(`Tracking Number: ${repair.tracking_number}`);
-  doc.text(`Client: ${repair.client_username}`);
-  doc.text(`Phone: ${repair.client_number}`);
-  doc.text(`Device: ${repair.device_name}`);
-  doc.text(`Problem: ${repair.problem_description}`);
-  doc.text(`Status: ${repair.repair_status}`);
-  doc.text(`Cost: ${repair.repair_cost ? repair.repair_cost + ' DA' : '— DA'}`);
-  doc.text(`Entry Date: ${repair.entry_date ? new Date(repair.entry_date).toLocaleDateString() : 'Invalid Date'}`);
+  return res.download(ticketPath, `ticket_${id_repair}.pdf`, err => {
+    if (err) console.error('Download error:', err);
+  });
+};
 
-  doc.end();
+const generateRepairTicket = (repair, qrDataUrl) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const ticketDir = path.join(process.cwd(), 'tickets');
+      if (!fs.existsSync(ticketDir)) fs.mkdirSync(ticketDir);
+
+      const ticketPath = path.join(ticketDir, `ticket_${repair.id_repair}.pdf`);
+      const doc = new PDFDocument();
+      const out = fs.createWriteStream(ticketPath);
+      doc.pipe(out);
+
+      // أدرج QR code بالرابط المحلي
+      const qr = await QRCode.toDataURL(qrDataUrl);
+      doc.image(Buffer.from(qr.split(',')[1], 'base64'), 450, 20, { width: 100 });
+
+      // المحتوى
+      doc.fontSize(16).text('Repair Request Ticket', { align: 'center' }).moveDown();
+      const lines = [
+        `Tracking Number: ${repair.tracking_number}`,
+        `Client:         ${repair.client_username}`,
+        `Phone:          ${repair.client_number}`,
+        `Device:         ${repair.device_name}`,
+        `Problem:        ${repair.problem_description}`,
+        `Entry Date:     ${new Date(repair.entry_date).toLocaleDateString()}`
+      ];
+      lines.forEach(line => doc.fontSize(12).text(line).moveDown());
+
+      doc.fontSize(12).text(`Status:         ${repair.repair_status}`).moveDown();
+      if (repair.repair_status === 'Repaired' && repair.cost != null) {
+        doc.fontSize(12).text(`Cost:           ${repair.cost} DA`).moveDown();
+      }
+
+      doc.end();
+      out.on('finish', () => resolve());
+      out.on('error', err => reject(err));
+    } catch (err) {
+      reject(err);
+    }
+  });
 };

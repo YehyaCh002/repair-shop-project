@@ -8,70 +8,73 @@ export default function RepairRequests() {
   const { user, loading: authLoading } = useContext(AuthContext);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
+  const [error, setError]       = useState("");
+  const [search, setSearch]     = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user?.id_workshop) {
-      navigate("/login");
-    }
+    if (!user?.id_workshop) navigate("/login");
   }, [authLoading, user, navigate]);
 
   useEffect(() => {
     if (authLoading || !user?.id_workshop) return;
-
-    const fetchRepairRequests = async () => {
+    (async () => {
       setLoading(true);
       setError("");
       try {
-        const response = await fetch(
-          `http://localhost:5000/api/get-repairs`,
-          { credentials: 'include' }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch repair requests");
-        }
-
-        const data = await response.json();
-        console.log("Fetched Repair Requests:", data);
-
-        if (Array.isArray(data)) {
-          setRequests(data);
-        } else {
-          console.error("Unexpected data format:", data);
-          setRequests([]);
-        }
+        const res = await fetch("http://localhost:5000/api/get-repairs", {
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("Fetch failed");
+        const data = await res.json();
+        setRequests(Array.isArray(data) ? data : []);
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchRepairRequests();
+    })();
   }, [authLoading, user]);
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this repair request?")) return;
-
+    if (!window.confirm("Delete this request?")) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/delete-repairs/${id}`, {
+      const res = await fetch(`http://localhost:5000/api/delete-repairs/${id}`, {
         method: "DELETE",
-        credentials: 'include'
+        credentials: "include",
       });
-      
-      if (response.ok) {
-        setRequests((prev) => prev.filter((req) => req.id_repair !== id));
-      } else {
-        console.error("Failed to delete the repair request.");
-      }
-    } catch (error) {
-      console.error("Error deleting repair request:", error);
+      if (res.ok) setRequests(r => r.filter(x => x.id_repair !== id));
+    } catch (err) {
+      console.error(err);
     }
   };
+  const print_ticket = async (id) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/ticket/${id}`, {
+        method: "GET",
+        credentials: "include",
+      });
+  
+      if (res.ok) {
+        const blob = await res.blob(); // Get PDF as blob
+        const url = window.URL.createObjectURL(blob); // Create a temporary URL
+        window.open(url, "_blank");
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `ticket_${id}.pdf`; // File name
+        document.body.appendChild(a);
+        a.click(); // Trigger download
+        a.remove();
+        window.URL.revokeObjectURL(url); // Clean up
+      } else {
+        console.error("Failed to download ticket");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  
 
   if (authLoading || loading) return <div className="text-center p-6">Loading repair requests...</div>;
   if (error) return <div className="text-red-500 text-center p-6">{error}</div>;
@@ -126,7 +129,7 @@ export default function RepairRequests() {
   ) : (
     requests
       .filter((req) =>
-        req.client_username?.toLowerCase().includes(search.toLowerCase())  // مطابق تمامًا
+        req.client_username?.toLowerCase().includes(search.toLowerCase())    
       )
       .map((req) => (
         <tr key={req.id_repair} className="hover:bg-gray-100">
@@ -161,18 +164,19 @@ export default function RepairRequests() {
             <FiEye
               className="text-blue-500 text-xl cursor-pointer hover:text-blue-700"
               title="View"
-              onClick={() => navigate(`/repair-request/${req.id_repair}`)}
+              onClick={() => print_ticket(req.id_repair)}
             />
             <FiEdit
               className="text-green-500 text-xl cursor-pointer hover:text-green-700"
               title="Edit"
-              onClick={() => navigate(`/edit-repair-request/${req.id_repair}`)}
+              onClick={() => navigate(`/edit-request/${req.id_repair}`)}
             />
             <FiTrash2
               className="text-red-500 text-xl cursor-pointer hover:text-red-700"
               title="Delete"
               onClick={() => handleDelete(req.id_repair)}
             />
+            
           </td>
         </tr>
       ))

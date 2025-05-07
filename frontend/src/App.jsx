@@ -1,6 +1,5 @@
-// App.jsx
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/authProvider";     
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/authProvider";
 import ProtectedRoute from "./context/protectedRoutes";
 import HomePage from "./pages/Home";
 import Login from "./pages/Login";
@@ -11,12 +10,17 @@ import EditRequest from "./pages/EditRequest";
 import TechniciansPage from "./pages/TechniciansPage";
 import NewTechnician from "./pages/NewTechnician";
 import EditTechnician from "./pages/EditTechnician";
+import WorkshopSettings from "./pages/WorkshopSettings";
+import FixRecords from "./pages/FixRecords";
 
 function App() {
   return (
-    <AuthProvider>            {/* ← لفّ هنا */}
+    <AuthProvider>
       <Router>
         <Routes>
+          {/* Redirect root to /home */}
+          <Route path="/" element={<Navigate to="/home" />} />
+
           {/* Public routes */}
           <Route path="/home" element={<HomePage />} />
           <Route path="/login" element={<Login />} />
@@ -47,6 +51,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/technicians"
             element={
@@ -64,13 +69,34 @@ function App() {
             }
           />
           <Route
-            path="/edit-technician/:id"
+            path="/edit-technician/:id_technicien"
             element={
               <ProtectedRoute>
                 <EditTechnician />
               </ProtectedRoute>
             }
           />
+
+          {/* Settings route */}
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <WorkshopSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+          path="/fix-records"
+          element={
+            <ProtectedRoute>
+              <FixRecords />
+            </ProtectedRoute>
+          }
+        />
+
+          {/* Fallback for unmatched routes */}
+          <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
       </Router>
     </AuthProvider>
