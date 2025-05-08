@@ -9,10 +9,10 @@ import {
   getRepairsByWorkshop as modelGetAll,
   deleteRepair         as modelDelete,
   updateRepair         as modelUpdate,
-  getRepairById        as modelGetone
+  getRepairById        as modelGetone,
+  getRepairByTrackingNumber  as modelGetByTracking
 } from '../models/repairModel.js';
 
-// ترجع أول IPv4 داخلي
 function getLocalIp() {
   const nets = os.networkInterfaces();
   for (const name of Object.keys(nets)) {
@@ -103,14 +103,32 @@ export const downloadTicket = async (req, res) => {
   if (!detailed) return res.status(404).json({ message: 'Not found' });
 
   const ticketDir  = path.join(process.cwd(), 'tickets');
-  const ticketPath = path.join(ticketDir, `ticket_${id_repair}.pdf`);
+  const ticketPath = path.join(ticketDir, `ticket_${detailed.id_repair}.pdf`);
   if (!fs.existsSync(ticketDir)) fs.mkdirSync(ticketDir);
 
   const serverIp    = getLocalIp();
-  const downloadUrl = `http://${serverIp}:5000/api/repair/ticket/${id_repair}`;
+  const downloadUrl = `http://${serverIp}:5000/api/repair/ticket/${detailed.id_repair}`;
   await generateRepairTicket(detailed, downloadUrl);
 
-  return res.download(ticketPath, `ticket_${id_repair}.pdf`, err => {
+  return res.download(ticketPath, `ticket_${detailed.id_repair}.pdf`, err => {
+    if (err) console.error('Download error:', err);
+  });
+};
+
+export const downloadTicketByTracking = async (req, res) => {
+  const { tracking_number } = req.params;
+  const detailed = await modelGetByTracking(tracking_number);
+  if (!detailed) return res.status(404).json({ message: 'Not found' });
+
+  const ticketDir  = path.join(process.cwd(), 'tickets');
+  const ticketPath = path.join(ticketDir, `ticket_${detailed.id_repair}.pdf`);
+  if (!fs.existsSync(ticketDir)) fs.mkdirSync(ticketDir);
+
+  const serverIp    = getLocalIp();
+  const downloadUrl = `http://${serverIp}:5000/api/repair/ticket/${tracking_number}`;
+  await generateRepairTicket(detailed, downloadUrl);
+
+  return res.download(ticketPath, `ticket_${tracking_number}.pdf`, err => {
     if (err) console.error('Download error:', err);
   });
 };
@@ -126,11 +144,9 @@ const generateRepairTicket = (repair, qrDataUrl) => {
       const out = fs.createWriteStream(ticketPath);
       doc.pipe(out);
 
-      // أدرج QR code بالرابط المحلي
       const qr = await QRCode.toDataURL(qrDataUrl);
       doc.image(Buffer.from(qr.split(',')[1], 'base64'), 450, 20, { width: 100 });
 
-      // المحتوى
       doc.fontSize(16).text('Repair Request Ticket', { align: 'center' }).moveDown();
       const lines = [
         `Tracking Number: ${repair.tracking_number}`,

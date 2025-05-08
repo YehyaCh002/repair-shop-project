@@ -60,7 +60,7 @@ export const addRepairRequest = async (data) => {
     const repairQuery = `
       INSERT INTO repair
         (id_client, id_device, id_workshop, id_technicien, created_at, tracking_number, repair_status)
-      VALUES ($1, $2, $3, $4, NOW(), $5, COALESCE($6, 'Not repaired'))
+      VALUES ($1, $2, $3, $4, NOW(), $5, COALESCE($6, 'Not Repaired'))
       RETURNING *
     `;
     const values = [
@@ -139,6 +139,7 @@ export const deleteRepair = async (id_repair) => {
   );
   return rowCount > 0 ? rows[0] : null;
 };
+
 export const updateRepair = async (id_repair, data) => {
   const { repair_status, cost } = data; 
 
@@ -146,6 +147,7 @@ export const updateRepair = async (id_repair, data) => {
   try {
     await conn.query("BEGIN");
 
+    // 1) On récupère l'appareil et le technicien associés à la réparation
     const {
       rows: [old]
     } = await conn.query(
@@ -156,6 +158,7 @@ export const updateRepair = async (id_repair, data) => {
     );
     if (!old) throw new Error("Repair not found");
 
+    // 2) On met à jour le statut de la réparation
     const {
       rows: [updated]
     } = await conn.query(
@@ -166,12 +169,26 @@ export const updateRepair = async (id_repair, data) => {
       [repair_status, id_repair]
     );
 
+    // 3) Si on passe en "Repaired", on essaie d'abord d'UPDATE la table fix
     if (repair_status === "Repaired") {
-      await conn.query(
-        `INSERT INTO fix (id_repair, id_device, id_technicien, fix_date, cost)
-         VALUES ($1, $2, $3, NOW(), $4)`,
+      const { rowCount } = await conn.query(
+        `UPDATE fix
+            SET fix_date = NOW(),
+                cost     = $4
+          WHERE id_repair   = $1
+            AND id_device   = $2
+            AND id_technicien = $3`,
         [id_repair, old.id_device, old.id_technicien, cost || 0]
       );
+
+      // 4) Si aucune ligne n'a été mise à jour, on INSERT
+      if (rowCount === 0) {
+        await conn.query(
+          `INSERT INTO fix (id_repair, id_device, id_technicien, fix_date, cost)
+           VALUES ($1, $2, $3, NOW(), $4)`,
+          [id_repair, old.id_device, old.id_technicien, cost || 0]
+        );
+      }
     }
 
     await conn.query("COMMIT");
@@ -204,10 +221,31 @@ export const getRepairById = async (id_repair) => {
   const { rows } = await pool.query(query, [id_repair]);
   return rows[0] || null;
 };
+
 export const insertFix = async ({ id_repair, id_device, id_technicien, cost }) => {
   const query = `
     INSERT INTO fix (id_repair, id_device, id_technicien, fix_date, cost)
     VALUES ($1, $2, $3, NOW(), $4)
   `;
   await pool.query(query, [id_repair, id_device, id_technicien, cost]);
+};
+
+export const getRepairByTrackingNumber = async (tracking_number) => {
+  const query = `
+    SELECT
+      r.id_repair,
+      r.tracking_number,
+      r.repair_status,
+      c.client_username,
+      c.client_number,
+      d.device_name,
+      d.problem_description,
+      r.created_at AS entry_date
+    FROM repair r
+    JOIN client c ON r.id_client = c.id_client
+    JOIN device d ON r.id_device = d.id_device
+    WHERE r.tracking_number = $1
+  `;
+  const { rows } = await pool.query(query, [tracking_number]);
+  return rows[0] || null;
 };

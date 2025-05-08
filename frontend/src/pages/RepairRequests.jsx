@@ -142,7 +142,7 @@ export default function RepairRequests() {
             <span
               className={`px-2 py-1 text-sm font-semibold rounded 
               ${
-                req.repair_status === "Not repaired"
+                req.repair_status === "Not Repaired"
                   ? "bg-red-200 text-red-800"
                   : req.repair_status === "In Progress"
                   ? "bg-yellow-200 text-yellow-800"

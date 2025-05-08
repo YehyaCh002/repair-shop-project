@@ -44,12 +44,12 @@ export default function NavBar() {
         </li>
 
         <li>
-          <Link className="block p-2 !text-white !no-underline hover:!text-indigo-400">
+          <Link to ="/contact" className="block p-2 !text-white !no-underline hover:!text-indigo-400">
             Contact Us
           </Link>
         </li>
         <li>
-          <Link className="block p-2 !text-white !no-underline hover:!text-indigo-400">
+          <Link to ="/about" className="block p-2 !text-white !no-underline hover:!text-indigo-400">
             About Us
           </Link>
         </li>

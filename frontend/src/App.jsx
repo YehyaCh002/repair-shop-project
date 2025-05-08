@@ -12,6 +12,8 @@ import NewTechnician from "./pages/NewTechnician";
 import EditTechnician from "./pages/EditTechnician";
 import WorkshopSettings from "./pages/WorkshopSettings";
 import FixRecords from "./pages/FixRecords";
+import AboutUs from "./pages/AboutUs";
+import ContactUs from "./pages/ContactUs";
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/about" element={<AboutUs />} />
+          <Route path="/contact" element={<ContactUs />} />
 
           {/* Admin-only routes */}
           <Route
