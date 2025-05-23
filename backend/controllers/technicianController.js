@@ -5,6 +5,7 @@ import {
   deletedTechnician,
   updateTechnician,
   getTechnicianByID,
+  getRepairsByTechnician
 } from '../models/technicianModel.js';
 
 export const fetchTechniciansByWorkshop = async (req, res) => {
@@ -95,3 +96,19 @@ export const getOneTechnician = async (req, res) => {
     return res.status(500).json({ message: err.message });
   }
 };
+export const getRepairsByTech = async (req, res) => {
+  const { id_technicien } = req.params;
+  const workshopId       = req.session.user?.id_workshop;
+
+  if (!workshopId) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  try {
+    const repairs = await getRepairsByTechnician(id_technicien,workshopId);
+    return res.status(200).json(repairs);
+  } catch (err) {
+    console.error('Error fetching repairs:', err);
+    return res.status(500).json({ message: err.message });
+  }
+}

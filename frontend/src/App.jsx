@@ -15,6 +15,7 @@ import FixRecords from "./pages/FixRecords";
 import AboutUs from "./pages/AboutUs";
 import ContactUs from "./pages/ContactUs";
 import Logout from "./pages/Logout";
+import Repair_Technician from "./pages/Repair_Technician";
 
 function App() {
   return (
@@ -82,7 +83,14 @@ function App() {
               </ProtectedRoute>
             }
           />
-
+          <Route
+            path="/repair-technician/:id_technicien"
+            element={
+              <ProtectedRoute>
+                <Repair_Technician />
+              </ProtectedRoute>
+            }
+          />
           {/* Settings route */}
           <Route
             path="/settings"

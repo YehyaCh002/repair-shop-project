@@ -125,10 +125,10 @@ export const downloadTicketByTracking = async (req, res) => {
   if (!fs.existsSync(ticketDir)) fs.mkdirSync(ticketDir);
 
   const serverIp    = getLocalIp();
-  const downloadUrl = `http://${serverIp}:5000/api/repair/ticket/${tracking_number}`;
+  const downloadUrl = `http://${serverIp}:5000/api/repair/ticket/${detailed.tracking_number}`;
   await generateRepairTicket(detailed, downloadUrl);
 
-  return res.download(ticketPath, `ticket_${tracking_number}.pdf`, err => {
+  return res.download(ticketPath, `ticket_${detailed.tracking_number}.pdf`, err => {
     if (err) console.error('Download error:', err);
   });
 };
@@ -147,6 +147,7 @@ const generateRepairTicket = (repair, qrDataUrl) => {
       const qr = await QRCode.toDataURL(qrDataUrl);
       doc.image(Buffer.from(qr.split(',')[1], 'base64'), 450, 20, { width: 100 });
 
+      // المحتوى
       doc.fontSize(16).text('Repair Request Ticket', { align: 'center' }).moveDown();
       const lines = [
         `Tracking Number: ${repair.tracking_number}`,

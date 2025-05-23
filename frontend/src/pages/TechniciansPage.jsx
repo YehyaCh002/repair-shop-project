@@ -139,7 +139,7 @@ export default function TechniciansPage() {
                           <FiEye
                             className="text-blue-500 text-xl cursor-pointer hover:text-blue-700"
                             title="View"
-                            onClick={() => navigate(`/technician/${tech.id_technicien}`)}
+                            onClick={() => navigate(`/repair-technician/${tech.id_technicien}`)}
                           />
                           <FiEdit
                             className="text-green-500 text-xl cursor-pointer hover:text-green-700"

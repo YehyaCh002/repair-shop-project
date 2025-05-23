@@ -1,8 +1,8 @@
 import pool from '../config/db.js';
 
-export const fetchFixedRepairs = async () => {
+export const fetchFixedRepairs = async (id_workshop) => {
   const query = `
-     SELECT
+    SELECT
       r.id_repair,
       r.id_client,
       r.id_device,
@@ -16,17 +16,20 @@ export const fetchFixedRepairs = async () => {
     JOIN device d ON d.id_device  = r.id_device
     LEFT JOIN fix f ON f.id_repair = r.id_repair
     WHERE r.repair_status = 'Repaired'
-    ORDER BY r.created_at DESC
+      AND r.id_workshop = $1
+    ORDER BY r.created_at DESC;
   `;
-  const { rows } = await pool.query(query);
+
+  const { rows } = await pool.query(query, [id_workshop]);
   return rows;
 };
+
 export const createFixAndReceive = async ({ id_repair, id_device, id_technicien, cost }) => {
   const conn = await pool.connect();
   try {
     await conn.query('BEGIN');
 
-    // Upsert on id_repair (must be declared UNIQUE in the DB)
+    // Upsert into fix table
     await conn.query(
       `INSERT INTO fix (
          id_repair,
@@ -43,15 +46,26 @@ export const createFixAndReceive = async ({ id_repair, id_device, id_technicien,
          id_technicien  = EXCLUDED.id_technicien,
          fix_date       = EXCLUDED.fix_date,
          cost           = EXCLUDED.cost,
-         received_date  = EXCLUDED.received_date`,
+         received_date  = EXCLUDED.received_date;
+      `,
       [id_repair, id_device, id_technicien, cost]
+    );
+
+    // Mark the repair as repaired
+    await conn.query(
+      `UPDATE repair
+         SET repair_status = 'Repaired'
+       WHERE id_repair = $1;
+      `,
+      [id_repair]
     );
 
     // Update device status
     await conn.query(
       `UPDATE device
          SET device_status = 'Received'
-       WHERE id_device = $1`,
+       WHERE id_device = $1;
+      `,
       [id_device]
     );
 

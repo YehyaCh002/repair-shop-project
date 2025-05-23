@@ -240,10 +240,18 @@ export const getRepairByTrackingNumber = async (tracking_number) => {
       c.client_number,
       d.device_name,
       d.problem_description,
-      r.created_at AS entry_date
+      r.created_at AS entry_date,
+      f.cost
     FROM repair r
     JOIN client c ON r.id_client = c.id_client
     JOIN device d ON r.id_device = d.id_device
+    LEFT JOIN (
+      SELECT DISTINCT ON (id_repair)
+        id_repair,
+        cost
+      FROM fix
+      ORDER BY id_repair, fix_date DESC
+    ) f ON r.id_repair = f.id_repair
     WHERE r.tracking_number = $1
   `;
   const { rows } = await pool.query(query, [tracking_number]);

@@ -132,3 +132,43 @@ export const getTechnicianByID = async (workshopId, technicianId) => {
   const result = await pool.query(query, [workshopId, technicianId]);
   return result.rows[0] || null;
 };
+export const getRepairsByTechnician = async (technicianId, workshopId) => {
+  const query = `
+    SELECT
+      r.id_repair,
+      r.tracking_number,
+      r.repair_status,
+      c.client_username,
+      c.client_number,
+      d.device_name,
+      d.problem_description,
+      r.created_at   AS entry_date,
+      f.cost
+    FROM repair r
+      JOIN client c 
+        ON r.id_client      = c.id_client
+      JOIN device d 
+        ON r.id_device      = d.id_device
+      JOIN employs e 
+        ON r.id_technicien  = e.id_technicien
+      LEFT JOIN (
+        SELECT DISTINCT ON (id_repair)
+          id_repair,
+          cost
+        FROM fix
+        ORDER BY id_repair, fix_date DESC
+      ) f
+        ON r.id_repair = f.id_repair
+    WHERE
+      r.id_technicien = $1
+      AND e.id_workshop = $2
+    ORDER BY
+      r.created_at DESC;
+  `;
+
+  // technicianId must be a plain integer (or string coercible to integer),
+  // workshopId likewise.
+  const result = await pool.query(query, [technicianId, workshopId]);
+  return result.rows;
+};
+
