@@ -42,6 +42,14 @@ export default function Sidebar() {
             Settings
           </Link>
         </li>
+        <li className="mb-2 hover:bg-gray-700 rounded">
+          <Link
+            to="/logout"
+            className="block p-2 !text-white !no-underline hover:!text-gray-200"
+          >
+            Logout
+          </Link>
+        </li>
       </ul>
     </div>
   );

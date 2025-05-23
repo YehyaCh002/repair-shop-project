@@ -39,14 +39,14 @@ export default function Login() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // مهم جداً لتفعيل الجلسة
+        credentials: "include", 
       });
 
       const data = await response.json();
       console.log("Login Response:", data); 
 
       if (response.ok && data.workshop) {
-        login(data.workshop); // نسجل الوركشوب في الـ context
+        login(data.workshop); 
         navigate("/repair-requests");
       } else {
         throw new Error(data.message || "Login failed");

@@ -25,23 +25,36 @@ export const createFixAndReceive = async ({ id_repair, id_device, id_technicien,
   const conn = await pool.connect();
   try {
     await conn.query('BEGIN');
-    // upsert fix record: insert or update existing
+
+    // Upsert on id_repair (must be declared UNIQUE in the DB)
     await conn.query(
-      `INSERT INTO fix (id_repair, id_device, id_technicien, fix_date, cost, received_date)
+      `INSERT INTO fix (
+         id_repair,
+         id_device,
+         id_technicien,
+         fix_date,
+         cost,
+         received_date
+       )
        VALUES ($1, $2, $3, NOW(), $4, NOW())
-       ON CONFLICT (id_device, id_technicien)
-       DO UPDATE SET fix_date = EXCLUDED.fix_date,
-                     cost = EXCLUDED.cost,
-                     received_date = EXCLUDED.received_date`
-      , [id_repair, id_device, id_technicien, cost]
+       ON CONFLICT (id_repair)
+       DO UPDATE SET
+         id_device      = EXCLUDED.id_device,
+         id_technicien  = EXCLUDED.id_technicien,
+         fix_date       = EXCLUDED.fix_date,
+         cost           = EXCLUDED.cost,
+         received_date  = EXCLUDED.received_date`,
+      [id_repair, id_device, id_technicien, cost]
     );
-    // update device status
+
+    // Update device status
     await conn.query(
       `UPDATE device
          SET device_status = 'Received'
        WHERE id_device = $1`,
       [id_device]
     );
+
     await conn.query('COMMIT');
   } catch (err) {
     await conn.query('ROLLBACK');

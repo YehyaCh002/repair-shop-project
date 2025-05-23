@@ -156,6 +156,15 @@ export const loginWorkshop = async (req, res) => {
     res.status(500).json({ error: "Login failed" });
   }
 };
+export const logoutWorkshop = (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error("Error destroying session:", err);
+      return res.status(500).json({ error: "Logout failed" });
+    }
+    res.status(200).json({ message: "Logout successful" });
+  });
+}
 export const checkSession = (req, res) => {
   if (req.session && req.session.user) {
     res.status(200).json({

@@ -6,13 +6,15 @@ export default function NavBar() {
       <h1 className="text-2xl font-light text-white">Fix Me</h1>
       <ul className="flex space-x-6 text-lg ps-8 mr-8">
         <li>
-          <Link className="block p-2 !text-white !no-underline hover:!text-indigo-400">
+          <Link to ="/home"
+          className="block p-2 !text-white !no-underline hover:!text-indigo-400">
             Home
           </Link>
         </li>
 
         <li className="relative group">
-          <Link className="block p-2 !text-white !no-underline hover:!text-indigo-400">
+          <Link to="/services" 
+          className="block p-2 !text-white !no-underline hover:!text-indigo-400">
             Services ▼
           </Link>
           <ul

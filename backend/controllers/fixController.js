@@ -11,12 +11,13 @@ export const getFixedRepairs = async (req, res) => {
 };
 
 export const receiveDevice = async (req, res) => {
-  const { id_repair, id_device, id_technicien, cost } = req.body;
+  const { id_fix, id_repair, id_device, id_technicien, cost } = req.body;
   try {
-    await createFixAndReceive({ id_repair, id_device, id_technicien, cost });
+    await createFixAndReceive({ id_fix, id_repair, id_device, id_technicien, cost });
     res.status(201).json({ message: 'Device received and status updated' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message });
   }
 };
+

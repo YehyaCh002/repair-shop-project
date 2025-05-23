@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData) => {
-    setUser(userData); // فقط معلومات الورشة
+    setUser(userData); 
   };
   
   const logout = () => setUser(null);

@@ -100,7 +100,7 @@ export default function Signup() {
               { label: "Owner Email", name: "workshop_gmail", type: "email" },
               { label: "Password", name: "workshop_password", type: "password" },
               { label: "Phone Number", name: "workshop_number", type: "tel" },
-              { label: "Repair Specialisation", name: "repair_specialisation", type: "text" },
+      
               { label: "Address", name: "workshop_adresse", type: "text" },
             ].map(({ label, name, type }) => (
               <div key={name} className="flex flex-col">
@@ -116,7 +116,23 @@ export default function Signup() {
                 />
               </div>
             ))}
-
+          </div>
+            {/* Specialization Selection */}
+            <div className="flex flex-col">
+              <label className="text-gray-700 font-medium mb-1">Repair Specialization</label>
+              <select
+                name="repair_specialisation"
+                value={formData.repair_specialisation}
+                onChange={handleChange}
+                className="border border-gray-300 rounded-lg px-4 py-2 text-black bg-white"
+                required
+              >
+                <option value="">Select specialization</option>
+                <option value="Phone and Tablets">Phone and Tablets</option>
+                <option value="Laptops and Desktops">Laptops and Desktops</option>
+                <option value="Printers">Printers</option>
+                <option value="Cars">Cars</option>
+              </select>
             {/* Wilaya Selection */}
             <div className="flex flex-col">
               <label className="text-gray-700 font-medium mb-1">Wilaya</label>

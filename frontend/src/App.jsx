@@ -14,6 +14,7 @@ import WorkshopSettings from "./pages/WorkshopSettings";
 import FixRecords from "./pages/FixRecords";
 import AboutUs from "./pages/AboutUs";
 import ContactUs from "./pages/ContactUs";
+import Logout from "./pages/Logout";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<ContactUs />} />
+          
 
           {/* Admin-only routes */}
           <Route
@@ -98,7 +100,15 @@ function App() {
             </ProtectedRoute>
           }
         />
-
+        <Route
+         path="/logout"
+         element={
+             <ProtectedRoute>
+            <Logout />
+            </ProtectedRoute>
+         }
+         />
+          
           {/* Fallback for unmatched routes */}
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
