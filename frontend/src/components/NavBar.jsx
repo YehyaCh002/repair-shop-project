@@ -65,6 +65,8 @@ export default function NavBar() {
           Register
         </li></Link>
       </ul>
+    
+
     </nav>
   );
 }

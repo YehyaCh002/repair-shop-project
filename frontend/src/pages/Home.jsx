@@ -56,6 +56,7 @@ export default function Home() {
     }
   };
 
+
   return (
     <div
       className={`h-screen w-screen bg-cover bg-center flex flex-col items-center justify-center transition-all duration-1000 transform ${
@@ -64,28 +65,32 @@ export default function Home() {
       style={{ backgroundImage: `url(${background})` }}
     >
       <NavBar />
-      <div className="text-center">
-        <h2 className="text-5xl font-extrabold mb-4">
+
+      <div className="text-center pointer-events-none">
+        <h2 className="text-5xl font-extrabold mb-4 text-white/90">
           Get Help With Your Device
         </h2>
-        <div className="flex justify-center items-center mb-6 gap-2">
-          <input
-            value={tracking}
-            onChange={(e) => setTracking(e.target.value)}
-            type="text"
-            placeholder="Enter your tracking number"
-            className="text-lg bg-amber-50 text-black pl-3 pr-24 py-4 rounded-lg hover:bg-indigo-100 transition"
-          />
-          <button
-            onClick={handleSearch}
-            className="bg-indigo-500 hover:bg-indigo-600 text-xl text-white px-6 py-4 rounded-lg shadow-lg transition"
-            disabled={loading}
-          >
-            {loading ? "Loading..." : "Search"}
-          </button>
-        </div>
-        {error && <p className="text-red-500">{error}</p>}
       </div>
+      <div className="flex justify-center items-center mb-6 gap-2 z-10">
+        <input
+          value={tracking}
+          onChange={(e) => setTracking(e.target.value)}
+          type="text"
+          placeholder="Enter your tracking number"
+          className="text-lg bg-amber-50 text-black pl-3 pr-24 py-4 rounded-lg hover:bg-indigo-100 transition focus:outline-none"
+        />
+        <button
+          onClick={handleSearch}
+          className="bg-indigo-500 hover:bg-indigo-600 text-xl text-white px-6 py-4 rounded-lg shadow-lg transition disabled:opacity-50"
+          disabled={loading}
+        >
+          {loading ? "Loading..." : "Search"}
+        </button>
+      </div>
+      {error && <p className="text-red-500 mt-2">{error}</p>}
+
+     
     </div>
   );
 }
+
